@@ -1,3 +1,16 @@
-dependencies {
-    implementation 'com.microsoft.onnxruntime:onnxruntime-android:1.16.1'
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // kept minimal
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
 }
