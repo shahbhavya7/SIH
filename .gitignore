@@ -1,0 +1,8 @@
+/best_model.pth
+/classes.json
+/cow.jpg
+/cow2.jpg
+/mobile_config.json
+/model.ipynb
+/model_basic.tflite
+/model_quantized.tflite
