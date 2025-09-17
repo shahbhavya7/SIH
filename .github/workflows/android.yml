@@ -1,45 +1,66 @@
-name: Build Android APK
+name: Debug Android Build Outputs
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
-  build:
+  debug-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: 17
-
       - name: Grant execute permission for Gradlew
         run: chmod +x ./gradlew
 
-      - name: Print Gradle modules
-        run: ./gradlew projects
-
-      - name: Print Gradle tasks
-        run: ./gradlew tasks --all | head -n 200
-
-      - name: Build with Gradle (assembleDebug)
-        run: ./gradlew assembleDebug --stacktrace --info
-
-      - name: Show outputs
+      - name: Show repo top-level
         run: |
-          echo "Searching for APK/AAR after build..."
-          find . -type f \( -name "*.apk" -o -name "*.aar" \) -print || true
-          ls -R app/build/outputs || true
+          echo "=== top-level ==="
+          ls -la
 
-      - name: Upload outputs
+      - name: Show app module files
+        run: |
+          echo "=== app dir listing ==="
+          ls -la app || true
+          echo "=== app/src main listing ==="
+          ls -la app/src || true
+          ls -la app/src/main || true
+          echo "=== app/build.gradle content ==="
+          if [ -f app/build.gradle ]; then echo "---- app/build.gradle ----"; sed -n '1,200p' app/build.gradle; else echo "app/build.gradle MISSING"; fi
+
+      - name: Show Gradle projects
+        run: ./gradlew projects --no-daemon
+
+      - name: Show Gradle tasks (first 300 lines)
+        run: ./gradlew tasks --all --no-daemon | sed -n '1,300p'
+
+      - name: Build (assembleDebug)
+        run: ./gradlew assembleDebug --info --stacktrace --no-daemon
+        continue-on-error: true
+
+      - name: After-build find outputs
+        run: |
+          echo "=== find apks/aars ==="
+          find . -type f \( -name "*.apk" -o -name "*.aar" \) -print || true
+          echo "=== app/build tree ==="
+          ls -la app/build || true
+          echo "=== full build outputs tree (repo) ==="
+          find . -maxdepth 6 -type d -name 'outputs' -print -exec ls -la {} \; || true
+
+      - name: Zip app/build for inspection
+        run: |
+          mkdir -p debug_out
+          if [ -d app/build ]; then
+            zip -r debug_out/app-build.zip app/build
+            ls -la debug_out
+          else
+            echo "No app/build dir to zip"
+          fi
+
+      - name: Upload debug artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-outputs
-          path: |
-            **/build/outputs/**/*.apk
-            **/build/outputs/**/*.aar
+          name: debug-build-outputs
+          path: debug_out/app-build.zip
