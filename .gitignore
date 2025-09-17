@@ -1,3 +1,33 @@
+# Android build files
+*.apk
+*.aab
+*.dex
+*.class
+bin/
+gen/
+out/
+release/
+.gradle/
+build/
+local.properties
+proguard/
+*.log
+.navigation/
+captures/
+*.iml
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+.idea/caches
+*.jks
+*.keystore
+.externalNativeBuild
+google-services.json
+
+# Project specific files (optional)
 /best_model.pth
 /classes.json
 /cow.jpg
@@ -6,3 +36,7 @@
 /model.ipynb
 /model_basic.tflite
 /model_quantized.tflite
+
+# OS files
+.DS_Store
+Thumbs.db
