@@ -1,7 +1,6 @@
 package com.example.cattlebreed
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -14,6 +13,8 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.widget.*
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -22,6 +23,7 @@ import ai.onnxruntime.*
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import java.io.BufferedInputStream
+import java.io.InputStream
 import java.nio.FloatBuffer
 import java.util.*
 import kotlin.math.exp
@@ -29,7 +31,7 @@ import kotlin.math.exp
 class MainActivity : AppCompatActivity() {
 
     private lateinit var env: OrtEnvironment
-    private lateinit var session: OrtSession
+    private var session: OrtSession? = null
     private lateinit var imageView: ImageView
     private lateinit var selectImageBtn: MaterialButton
     private lateinit var takePictureBtn: MaterialButton
@@ -55,11 +57,10 @@ class MainActivity : AppCompatActivity() {
         "Nguni", "Shorthorn", "Zebu"
     )
     
-    companion object {
-        private const val REQUEST_IMAGE_PICK = 1
-        private const val REQUEST_IMAGE_CAPTURE = 2
-        private const val REQUEST_CAMERA_PERMISSION = 100
-    }
+    // Modern Activity Result Launchers
+    private lateinit var galleryLauncher: ActivityResultLauncher<Intent>
+    private lateinit var cameraLauncher: ActivityResultLauncher<Intent>
+    private lateinit var permissionLauncher: ActivityResultLauncher<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,10 +70,41 @@ class MainActivity : AppCompatActivity() {
         
         setContentView(R.layout.activity_main)
         
+        initializeActivityLaunchers()
         initializeViews()
         setupGradientBackground()
         initializeModel()
         setupClickListeners()
+    }
+    
+    private fun initializeActivityLaunchers() {
+        // Gallery launcher
+        galleryLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                result.data?.data?.let { uri ->
+                    loadImageFromUri(uri)
+                }
+            }
+        }
+        
+        // Camera launcher
+        cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val imageBitmap = result.data?.extras?.get("data") as? Bitmap
+                imageBitmap?.let {
+                    displayImage(it)
+                }
+            }
+        }
+        
+        // Permission launcher
+        permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                openCamera()
+            } else {
+                Toast.makeText(this, "Camera permission is required to take photos", Toast.LENGTH_LONG).show()
+            }
+        }
     }
     
     private fun initializeViews() {
@@ -124,14 +156,13 @@ class MainActivity : AppCompatActivity() {
     private fun setupClickListeners() {
         selectImageBtn.setOnClickListener {
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-            startActivityForResult(intent, REQUEST_IMAGE_PICK)
+            galleryLauncher.launch(intent)
         }
         
         takePictureBtn.setOnClickListener {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) 
                 != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this, 
-                    arrayOf(Manifest.permission.CAMERA), REQUEST_CAMERA_PERMISSION)
+                permissionLauncher.launch(Manifest.permission.CAMERA)
             } else {
                 openCamera()
             }
@@ -146,29 +177,13 @@ class MainActivity : AppCompatActivity() {
     
     private fun openCamera() {
         val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        startActivityForResult(intent, REQUEST_IMAGE_CAPTURE)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        
-        if (resultCode == RESULT_OK) {
-            when (requestCode) {
-                REQUEST_IMAGE_PICK -> {
-                    data?.data?.let { uri ->
-                        loadImageFromUri(uri)
-                    }
-                }
-                REQUEST_IMAGE_CAPTURE -> {
-                    val imageBitmap = data?.extras?.get("data") as? Bitmap
-                    imageBitmap?.let {
-                        displayImage(it)
-                    }
-                }
-            }
+        if (intent.resolveActivity(packageManager) != null) {
+            cameraLauncher.launch(intent)
+        } else {
+            Toast.makeText(this, "No camera app found", Toast.LENGTH_SHORT).show()
         }
     }
-    
+
     private fun loadImageFromUri(uri: Uri) {
         try {
             val inputStream = contentResolver.openInputStream(uri)
@@ -219,18 +234,25 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun runInference(bitmap: Bitmap): List<Prediction> {
+        val currentSession = session ?: throw IllegalStateException("Model not initialized")
+        
         // Preprocess image
         val input = preprocess(bitmap)
         
         // Create tensor
         val shape = longArrayOf(1, 3, 224, 224)
         val tensor = OnnxTensor.createTensor(env, FloatBuffer.wrap(input), shape)
-        val feed = mapOf(session.inputNames.iterator().next() to tensor)
+        val inputName = currentSession.inputNames.iterator().next()
+        val feed = mapOf(inputName to tensor)
         
         // Run inference
-        val outputs = session.run(feed)
+        val outputs = currentSession.run(feed)
         val raw = outputs[0].value as Array<FloatArray>
         val logits = raw[0]
+        
+        // Clean up tensor
+        tensor.close()
+        outputs.close()
         
         // Apply softmax
         val probabilities = softmax(logits)
@@ -307,6 +329,16 @@ class MainActivity : AppCompatActivity() {
             confidence > 0.7f -> Color.parseColor("#4CAF50")  // Green
             confidence > 0.3f -> Color.parseColor("#FF9800")  // Orange
             else -> Color.parseColor("#F44336")               // Red
+        }
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            session?.close()
+            env.close()
+        } catch (e: Exception) {
+            Log.e("ONNX", "Error during cleanup", e)
         }
     }
     
