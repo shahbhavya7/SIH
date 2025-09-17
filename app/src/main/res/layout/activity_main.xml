@@ -81,7 +81,6 @@
                     android:layout_height="wrap_content"
                     android:text="📷 Select or capture cattle image"
                     android:textSize="16sp"
-                    android:textColor="#757575"
                     android:layout_gravity="center"
                     android:background="#80000000"
                     android:textColor="#FFFFFF"
