@@ -21,27 +21,25 @@ jobs:
       - name: Grant execute permission for Gradlew
         run: chmod +x ./gradlew
 
-      - name: Show repo top-level (debug)
-        run: ls -la
+      - name: Print Gradle modules
+        run: ./gradlew projects
+
+      - name: Print Gradle tasks
+        run: ./gradlew tasks --all | head -n 200
 
       - name: Build with Gradle (assembleDebug)
-        # run with --info so logs show outputs
-        run: ./gradlew assembleDebug --info
-        # if your module name is not 'app', replace assembleDebug with :<module>:assembleDebug
+        run: ./gradlew assembleDebug --stacktrace --info
 
-      - name: List build outputs (debug)
+      - name: Show outputs
         run: |
-          echo "Listing app/build/outputs:"
-          ls -la app/build/outputs || true
-          echo "Listing all APKs under repo:"
-          find . -type f -name "*.apk" -maxdepth 6 -print || true
+          echo "Searching for APK/AAR after build..."
+          find . -type f \( -name "*.apk" -o -name "*.aar" \) -print || true
+          ls -R app/build/outputs || true
 
-      - name: Upload any built APKs
+      - name: Upload outputs
         uses: actions/upload-artifact@v4
         with:
-          name: cattle-breed-apk
+          name: build-outputs
           path: |
-            app/build/outputs/**/*.apk
             **/build/outputs/**/*.apk
-            app/build/outputs/apk/**/*.apk
-            */build/outputs/apk/**/*.apk
+            **/build/outputs/**/*.aar
