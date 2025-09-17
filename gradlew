@@ -232,4 +232,4 @@ eval "set -- $(
         | tr '\n' ' '
     )" '"$@"'
 
-exec "$JAVA_EXE" "$@"
+exec "$JAVACMD" "$@"
