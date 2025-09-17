@@ -1,27 +1,306 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:gravity="center"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:padding="16dp">
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/pickButton"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Pick Image" />
+        android:orientation="vertical"
+        android:padding="20dp">
 
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="260dp"
-        android:layout_height="260dp"
-        android:layout_marginTop="12dp"
-        android:scaleType="centerCrop" />
+        <!-- App Title -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="30dp">
 
-    <TextView
-        android:id="@+id/resultView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Prediction:"
-        android:layout_marginTop="12dp"
-        android:textSize="18sp" />
-</LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🐄"
+                android:textSize="32sp"
+                android:layout_marginEnd="12dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CattlyVet"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:textColor="#1565C0" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" Pro"
+                android:textSize="18sp"
+                android:textColor="#4CAF50"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
+
+        <!-- Subtitle -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="AI-Powered Cattle Breed Classification"
+            android:textSize="16sp"
+            android:textColor="#757575"
+            android:gravity="center"
+            android:layout_marginBottom="30dp" />
+
+        <!-- Image Display Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:layout_marginBottom="20dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="8dp"
+            app:strokeWidth="0dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/imageView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:background="#F5F5F5" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📷 Select or capture cattle image"
+                    android:textSize="16sp"
+                    android:textColor="#757575"
+                    android:layout_gravity="center"
+                    android:background="#80000000"
+                    android:textColor="#FFFFFF"
+                    android:padding="12dp" />
+            </FrameLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Action Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="20dp"
+            android:gravity="center">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/selectImageBtn"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:text="📁 Gallery"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginEnd="8dp"
+                app:cornerRadius="12dp"
+                app:backgroundTint="#1976D2" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/takePictureBtn"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:text="📸 Camera"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginStart="8dp"
+                app:cornerRadius="12dp"
+                app:backgroundTint="#FF7043" />
+        </LinearLayout>
+
+        <!-- Predict Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/predictBtn"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:text="🧠 Analyze Breed"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="20dp"
+            app:cornerRadius="16dp"
+            app:backgroundTint="#4CAF50"
+            android:enabled="false" />
+
+        <!-- Progress Bar -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginBottom="20dp"
+            android:visibility="gone" />
+
+        <!-- Results Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/resultCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="30dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="8dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="#BBDEFB"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <!-- Results Title -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="🎯 Breed Classification Results"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#212121"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Top 3 Predictions -->
+                
+                <!-- Prediction 1 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="12dp"
+                    android:background="#E8F5E8"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:text="🥇"
+                        android:textSize="16sp"
+                        android:gravity="center"
+                        android:layout_marginEnd="12dp" />
+
+                    <TextView
+                        android:id="@+id/breedName1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Gir"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#212121" />
+
+                    <TextView
+                        android:id="@+id/confidence1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="79%"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="#4CAF50" />
+                </LinearLayout>
+
+                <!-- Prediction 2 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="12dp"
+                    android:background="#FFF3E0"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:text="🥈"
+                        android:textSize="16sp"
+                        android:gravity="center"
+                        android:layout_marginEnd="12dp" />
+
+                    <TextView
+                        android:id="@+id/breedName2"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Red Sindhi"
+                        android:textSize="16sp"
+                        android:textColor="#212121" />
+
+                    <TextView
+                        android:id="@+id/confidence2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="13%"
+                        android:textSize="16sp"
+                        android:textColor="#FF9800" />
+                </LinearLayout>
+
+                <!-- Prediction 3 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:background="#E3F2FD"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:text="🥉"
+                        android:textSize="16sp"
+                        android:gravity="center"
+                        android:layout_marginEnd="12dp" />
+
+                    <TextView
+                        android:id="@+id/breedName3"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Sahiwal"
+                        android:textSize="16sp"
+                        android:textColor="#212121" />
+
+                    <TextView
+                        android:id="@+id/confidence3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="4%"
+                        android:textSize="16sp"
+                        android:textColor="#2196F3" />
+                </LinearLayout>
+
+                <!-- Confidence Note -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="💡 Higher confidence indicates more certainty"
+                    android:textSize="12sp"
+                    android:textColor="#757575"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Footer -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Powered by AI • For Veterinary Use"
+            android:textSize="12sp"
+            android:textColor="#757575"
+            android:gravity="center"
+            android:layout_marginTop="20dp" />
+
+    </LinearLayout>
+</ScrollView>
